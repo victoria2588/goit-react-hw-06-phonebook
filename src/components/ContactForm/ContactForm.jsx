@@ -1,53 +1,72 @@
-import { nanoid } from 'nanoid';
-import * as Yup from 'yup';
-import { Formik } from 'formik';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { getContacts } from '../../redux/selectors';
+import { addContact } from '../../redux/contactsSlice';
 import {
   FormAddContact,
   InputField,
   Label,
   ButtonAddContact,
-  ErrorMessageWrapper,
 } from './ContactForm.styled';
 
-const phoneRegExp =
-  '\\+?\\d{1,4}?[ .\\-\\s]?\\(?\\d{1,3}?\\)?[ .\\-\\s]?\\d{1,4}[ .\\-\\s]?\\d{1,4}[ .\\-\\s]?\\d{1,9}';
-const nameRegExp =
-  "^[a-zA-Zа-яА-Я]+(([' \\-][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$";
+export const ContactForm = () => {
+  const contacts = useSelector(getContacts);
+  const dispatch = useDispatch();
 
-const schema = Yup.object().shape({
-  name: Yup.string()
-    .matches(nameRegExp, 'Name is not valid')
-    .required('A name is required'),
-  number: Yup.string()
-    .matches(phoneRegExp, 'Phone number is not valid')
-    .required('A phone number is required'),
-});
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
 
-export const ContactForm = ({ onAddContact }) => {
+  const handleChange = event => {
+    const { name, value } = event.currentTarget;
+    name === 'name' && setName(value);
+    name === 'number' && setNumber(value);
+  };
+
+  const formReset = () => {
+    setName('');
+    setNumber('');
+  };
+
+  const formSubmitHandler = data => {
+    contacts.some(
+      contact => contact.name.toLowerCase() === data.name.toLowerCase()
+    )
+      ? alert(`${data.name} is already in contacts`)
+      : dispatch(addContact({ name, number })) && formReset();
+  };
+
+  const handleSubmit = event => {
+    event.preventDefault();
+    formSubmitHandler({ name, number });
+  };
+
   return (
-    <Formik
-      initialValues={{ name: '', number: '' }}
-      validationSchema={schema}
-      onSubmit={(values, actions) => {
-        onAddContact({ ...values, id: nanoid() });
-        actions.resetForm();
-      }}
-    >
-      <FormAddContact>
-        <Label>
-          Name
-          <InputField name="name" placeholder="Enter Name" />
-          <ErrorMessageWrapper name="name" component="div" />
-        </Label>
-
-        <Label>
-          Number
-          <InputField name="number" type="tel" placeholder="Enter Phone" />
-          <ErrorMessageWrapper name="number" component="div" />
-        </Label>
-
-        <ButtonAddContact type="submit">Add contact</ButtonAddContact>
-      </FormAddContact>
-    </Formik>
+    <FormAddContact onSubmit={handleSubmit}>
+      <Label>
+        Name
+        <InputField
+          type="text"
+          name="name"
+          value={name}
+          pattern="^[a-zA-Zа-яА-Я]+(([' \\-][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
+          title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
+          required
+          onChange={handleChange}
+        />
+      </Label>
+      <Label>
+        Number
+        <InputField
+          type="tel"
+          name="number"
+          value={number}
+          pattern="\\+?\\d{1,4}?[ .\\-\\s]?\\(?\\d{1,3}?\\)?[ .\\-\\s]?\\d{1,4}[ .\\-\\s]?\\d{1,4}[ .\\-\\s]?\\d{1,9}"
+          required
+          onChange={handleChange}
+        />
+      </Label>
+      <ButtonAddContact type="submit">Add contact</ButtonAddContact>
+    </FormAddContact>
   );
 };

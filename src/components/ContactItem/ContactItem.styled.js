@@ -1,5 +1,10 @@
 import styled from 'styled-components';
 
+export const ItemContact = styled.li`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
 export const ButtonDeleteContact = styled.button`
   min-width: 60px;
   background: #d93bd6;
